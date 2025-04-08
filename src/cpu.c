@@ -1,6 +1,8 @@
 #include "cpu.h"
 
-void cpuInit(cpu *cpu) {
+extern CPU cpu;
+
+void cpuInit(CPU *cpu) {
     cpu->a = 0X01;
     cpu->f = 0XB0;
     cpu->b = 0X00;

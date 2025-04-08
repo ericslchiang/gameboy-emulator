@@ -17,6 +17,6 @@ typedef struct {
     uint8_t l;
     uint16_t pc;
     uint16_t sp;
-} cpu;
+} CPU;
 
-void cpuInit(cpu *cpu);
+void cpuInit(CPU *cpu);
