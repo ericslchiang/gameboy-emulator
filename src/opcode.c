@@ -26,14 +26,11 @@ void SUB(uint8_t *reg, uint8_t val) {
     cpu.f |= 1 << FLAG_SUB;
 }
 
-void ADD16(uint8_t *upper_reg, uint8_t *lower_reg, uint16_t val) {
-    uint16_t before = *upper_reg << 8 + *lower_reg;
-    uint16_t after = before + val;
+void ADD16(uint16_t *reg, uint16_t val) {
+    uint16_t before = *reg;
+    *reg += val;
 
-    *lower_reg = after & 0xFF; // Lower 8 bits
-    *upper_reg = after >> 8; // Upper 8 bits
-
-    if(before + val > 0xFFFF) //Check for overflow
+    if(*reg > 0xFFFF) //Check for overflow
         cpu.f |= 1 << FLAG_CARRY;
     if((before & 0xFFF) + (val & 0xFFF) > 0xFFF) //Check for overflow on 11th bit
         cpu.f |= 1 << FLAG_HALF_CARRY;
@@ -80,7 +77,7 @@ void CP(uint8_t *reg, uint8_t val){
     cpu.f |= 1 << FLAG_SUB;
 }
 
-void INC(uint8_t *reg) {
+void INC8(uint8_t *reg) {
     uint8_t before = *reg;
     *reg++;
 
@@ -91,7 +88,7 @@ void INC(uint8_t *reg) {
     cpu.f &= ~(1 << FLAG_SUB);
 }
 
-void DEC(uint8_t *reg) {
+void DEC8(uint8_t *reg) {
     uint8_t before = *reg;
     *reg--;
 
@@ -194,8 +191,8 @@ void SRL(uint8_t *reg) {
 }
 
 void SWAP(uint8_t *reg) {
-    uint8_t upper = (*reg & 0b11110000) >> 4;
-    *reg = *reg << 4 | upper;
+    uint8_t upperNibble = (*reg & 0b11110000) >> 4;
+    *reg = *reg << 4 | upperNibble;
     cpu.f &= ~(1 << FLAG_CARRY | 1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
     if (*reg == 0)
         cpu.f |= 1 << FLAG_ZERO;
@@ -237,9 +234,9 @@ void RST(uint8_t vec) {
     cpu.pc = vec;
 }
 
-void POP(uint8_t *upper_reg, uint8_t *lower_reg) {
-    *lower_reg = memoryRead(cpu.sp++);
-    *upper_reg = memoryRead(cpu.sp++);
+void POP(uint16_t *reg) {
+    *reg = memoryRead(cpu.sp++);
+    *reg |= memoryRead(cpu.sp++) << 8;
 }
 
 void PUSH(uint16_t reg) {

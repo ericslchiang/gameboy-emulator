@@ -15,12 +15,12 @@ extern CPU cpu;
 //Arithmetic operations
 void ADD8(uint8_t *reg, uint8_t val);
 void SUB(uint8_t *reg, uint8_t val);
-void ADD16(uint8_t *upper_reg, uint8_t *lower_reg, uint16_t val);
+void ADD16(uint16_t *reg, uint16_t val);
 void ADC(uint8_t *reg, uint8_t val);
 void SBC(uint8_t *reg, uint8_t val);
 void CP(uint8_t *reg, uint8_t val);
-void INC(uint8_t *reg);
-void DEC(uint8_t *reg);
+void INC8(uint8_t *reg);
+void DEC8(uint8_t *reg);
 
 //Bitwise operations
 void AND(uint8_t *reg, uint8_t val);
@@ -43,7 +43,7 @@ void RET(uint8_t enableInterrupt, enum ConditionCode cc);
 void RST(uint8_t vec); //Value of vec will be determined by the opcode value
 
 // Stack manipulation commands
-void POP(uint8_t *upper_reg, uint8_t *lower_reg);
+void POP(uint16_t *reg);
 void PUSH(uint16_t reg);
 
 //Carry flag operations
