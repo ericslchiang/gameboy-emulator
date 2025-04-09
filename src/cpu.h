@@ -7,6 +7,7 @@
 #define FLAG_CARRY 4
 
 typedef struct {
+    uint8_t IME; // Interrupt Master Enable
     uint8_t a;
     uint8_t f;
     uint8_t b;

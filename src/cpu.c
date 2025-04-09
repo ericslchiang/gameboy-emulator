@@ -3,6 +3,7 @@
 extern CPU cpu;
 
 void cpuInit(CPU *cpu) {
+    cpu->IME = 0;
     cpu->a = 0X01;
     cpu->f = 0XB0;
     cpu->b = 0X00;

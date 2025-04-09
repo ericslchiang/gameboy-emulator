@@ -15,9 +15,14 @@
 #define HRAM 0xFF80
 #define MEM_INTERRUPT_EN 0xFFFF
 
+//IO Defines
+#define IO_INTERRUPT 0XFF0F
+
 typedef struct {
     uint8_t memory[0xFFFF];
 } MEMORY;
+
+MEMORY memory;
 
 void memoryLoadBootROM(void);
 uint8_t memoryRead(uint16_t address);

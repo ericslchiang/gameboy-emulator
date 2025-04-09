@@ -7,7 +7,6 @@
 #include "memory.h"
 
 CPU cpu;
-MEMORY memory;
 
 int main(void) {
   memoryLoadBootROM();
