@@ -18,11 +18,7 @@
 //IO Defines
 #define IO_INTERRUPT 0XFF0F
 
-typedef struct {
-    uint8_t memory[0xFFFF];
-} MEMORY;
-
-MEMORY memory;
+uint8_t memory[0xFFFF];
 
 void memoryLoadBootROM(void);
 uint8_t memoryRead(uint16_t address);

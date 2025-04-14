@@ -12,6 +12,17 @@ enum ConditionCode{
 
 extern CPU cpu;
 
+//Load operations
+#define LD(reg, val) (reg) = (val)
+#define LD_8_MEM(reg, address) (reg) = memoryRead(address) // Write cpu register from memory
+#define LD_MEM_8(address, reg) memoryWrite((address), (reg)) // Write memory from cpu register
+#define LDH_A_MEM() cpu.a = memoryRead(0xFF00 + cpuFetch())
+#define LDH_MEM_A() memoryWrite((0xFF00 + cpuFetch()), cpu.a) 
+#define LDH_A_C() cpu.a = memoryRead(cpu.c + 0xFF00)
+#define LDH_C_A() memoryWrite((cpu.c + 0xFF00), cpu.a)
+void LD_MEM_SP(void);
+void LD_HL_SP(void);
+
 //Arithmetic operations
 void ADD8(uint8_t *reg, uint8_t val);
 void SUB(uint8_t *reg, uint8_t val);
@@ -26,7 +37,7 @@ void DEC8(uint8_t *reg);
 void AND(uint8_t *reg, uint8_t val);
 void OR(uint8_t *reg, uint8_t val);
 void XOR(uint8_t *reg, uint8_t val);
-void CPL(uint8_t *reg, uint8_t val);
+void CPL(void);
 void BIT(uint8_t *reg, uint8_t bitPosition);
 void RL(uint8_t *reg, uint8_t isCircular, uint8_t isRegA);
 void RR(uint8_t *reg, uint8_t isCircular, uint8_t isRegA);
@@ -38,13 +49,14 @@ void SWAP(uint8_t *reg);
 //Subroutine operations
 void JP(uint16_t address, enum ConditionCode cc);
 void CALL(uint16_t address, enum ConditionCode cc);
-void JR(uint8_t offset, enum ConditionCode cc);
+void JR(int8_t offset, enum ConditionCode cc);
 void RET(uint8_t enableInterrupt, enum ConditionCode cc);
 void RST(uint8_t vec); //Value of vec will be determined by the opcode value
 
 // Stack manipulation commands
 void POP(uint16_t *reg);
 void PUSH(uint16_t reg);
+void ADD_SP(uint16_t *reg, int8_t val);
 
 //Carry flag operations
 void CCF(void); //Invert carry flag
@@ -63,7 +75,6 @@ void STOP(void);
 // Static Functions
 static uint8_t checkConditionCode(enum ConditionCode cc);
 
-#define LD(x, y) (x) = (y)
 #define INC16(x) (x)++
 #define DEC16(x) (x)--
 #define RES(reg, bitPosition) (reg) &= ~(1 << (bitPosition))

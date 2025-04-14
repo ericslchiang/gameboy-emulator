@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-extern CPU cpu;
+CPU cpu;
 
 #define FLAG_ZERO 7
 #define FLAG_SUB 6
@@ -43,4 +43,6 @@ typedef struct {
 } CPU;
 
 void cpuInit(void);
-void cpuExecuteOpcode(uint8_t opcode);
+uint8_t cpuFetch(void);
+void cpuExecuteOpcode(void);
+void cpuExecutePrefixOpcode(void);

@@ -6,7 +6,7 @@
 #include "ppu.h"
 #include "memory.h"
 
-CPU cpu;
+extern CPU cpu;
 
 int main(void) {
   memoryLoadBootROM();

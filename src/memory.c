@@ -1,7 +1,5 @@
 #include "memory.h"
 
-extern MEMORY memory;
-
 void memoryLoadBootROM(void) {
     FILE *filePointer = fopen("./roms/dmg_boot.bin", "rb");
     if(filePointer == NULL) {
@@ -13,7 +11,7 @@ void memoryLoadBootROM(void) {
     uint8_t byte;
     uint16_t i = 0;
     while (fread(&byte, sizeof(uint8_t), 1, filePointer) > 0) {
-        memory.memory[i] = byte;
+        memory[i] = byte;
         i++;
     }
     fclose(filePointer);
@@ -25,7 +23,7 @@ uint8_t memoryRead(uint16_t address) {
         return;
     }
 
-    return memory.memory[address];
+    return memory[address];
 }
 
 void memoryWrite(uint16_t address, uint8_t byte) {
@@ -34,5 +32,5 @@ void memoryWrite(uint16_t address, uint8_t byte) {
         return;
     }
 
-    memory.memory[address] = byte;
+    memory[address] = byte;
 }

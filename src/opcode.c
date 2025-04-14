@@ -1,5 +1,24 @@
 #include "opcode.h"
 
+void LD_MEM_SP(void) {
+    uint16_t address = memoryRead(++cpu.pc) | memoryRead(++cpu.pc) << 8;
+    memoryWrite(address, (uint8_t)(cpu.sp & 0xFF));
+    memoryWrite(++address, (uint8_t)(cpu.sp >> 8));
+}
+
+void LD_HL_SP(void) {
+    int8_t val = memoryRead(++cpu.pc);
+    uint16_t before = cpu.sp;
+
+    cpu.hl = (uint16_t)(before + val);
+
+    cpu.f &= ~(1 << FLAG_ZERO | 1 << FLAG_SUB);
+    if (val + before > 0xFFFF) 
+        cpu.f |= 1 << FLAG_CARRY;
+    if(val + before & 0xFF > 0xFF)
+        cpu.f |= 1 << FLAG_HALF_CARRY;
+}
+
 void ADD8(uint8_t *reg, uint8_t val) {
     uint8_t before = *reg;
     *reg += val;
@@ -24,6 +43,17 @@ void SUB(uint8_t *reg, uint8_t val) {
     if (*reg == 0) // Check if result is 0
         cpu.f |= 1 << FLAG_ZERO;
     cpu.f |= 1 << FLAG_SUB;
+}
+
+void ADD_SP(uint16_t *reg, int8_t val) {
+    uint16_t before = *reg;
+    *reg += val;
+
+    if((before & 0xFF) + val > 0xFF) //Check for overflow on 7th bit
+        cpu.f |= 1 << FLAG_CARRY;
+    if((before & 0xF) + (int8_t)(val & 0xF) > 0xF) //Check for overflow on 3rd bit
+        cpu.f |= 1 << FLAG_HALF_CARRY;
+    cpu.f &= ~(1 << FLAG_SUB | 1 << FLAG_ZERO);
 }
 
 void ADD16(uint16_t *reg, uint16_t val) {
@@ -121,8 +151,8 @@ void XOR(uint8_t *reg, uint8_t val) {
         cpu.f |= 1 << FLAG_ZERO;
 }
 
-void CPL(uint8_t *reg) {
-    *reg = ~(*reg);
+void CPL(void) {
+    cpu.a = ~(cpu.a);
     cpu.f |= 1 << FLAG_HALF_CARRY | 1 << FLAG_SUB;
 }
 
@@ -211,7 +241,7 @@ void CALL(uint16_t address, enum ConditionCode cc) {
     }
 }
 
-void JR(uint8_t offset, enum ConditionCode cc) {
+void JR(int8_t offset, enum ConditionCode cc) {
     if(checkConditionCode(cc)) {
         JP(cpu.pc + offset, NOC);
     }
