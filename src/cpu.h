@@ -43,6 +43,6 @@ typedef struct {
 } CPU;
 
 void cpuInit(void);
-uint8_t cpuFetch(void);
+static uint8_t cpuFetch(void);
 void cpuExecuteOpcode(void);
 void cpuExecutePrefixOpcode(void);

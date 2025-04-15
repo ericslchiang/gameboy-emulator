@@ -1,13 +1,13 @@
 #include "opcode.h"
 
 void LD_MEM_SP(void) {
-    uint16_t address = memoryRead(++cpu.pc) | memoryRead(++cpu.pc) << 8;
+    uint16_t address = cpuFetch() | cpuFetch() << 8;
     memoryWrite(address, (uint8_t)(cpu.sp & 0xFF));
     memoryWrite(++address, (uint8_t)(cpu.sp >> 8));
 }
 
 void LD_HL_SP(void) {
-    int8_t val = memoryRead(++cpu.pc);
+    int8_t val = cpuFetch();
     uint16_t before = cpu.sp;
 
     cpu.hl = (uint16_t)(before + val);
@@ -285,11 +285,11 @@ void SCF(void) {
 }
 
 void DI(void) {
-    cpu.IME = 0;
+    cpu.IME = FALSE;
 }
 
 void EI(void) {
-    cpu.IME = 1;
+    cpu.IME = TRUE;
 }
 
 void HALT(void) {

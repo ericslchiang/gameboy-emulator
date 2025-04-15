@@ -2,7 +2,7 @@
 #include "opcode.h"
 
 void cpuInit(void) {
-    cpu.IME = 0;
+    cpu.IME = FALSE;
     cpu.a = 0X01;
     cpu.f = 0XB0;
     cpu.b = 0X00;
@@ -15,7 +15,7 @@ void cpuInit(void) {
     cpu.pc = 0x0100;
 }
 
-uint8_t cpuFetch(void) {
+static uint8_t cpuFetch(void) {
     return memoryRead(cpu.pc++);
 }
 
@@ -30,7 +30,7 @@ void cpuExecuteOpcode(void) {
         case 0x04: INC8(&cpu.b); break;
         case 0x05: DEC8(&cpu.b); break;
         case 0x06: LD_8_MEM(cpu.b, cpuFetch()); break;
-        case 0x07: RL(cpu.a, 1, 1); break;
+        case 0x07: RL(cpu.a, TRUE, TRUE); break;
         case 0x08: LD_SP(); break;
         case 0x09: ADD16(&cpu.hl, cpu.bc); break;
         case 0x0A: LD_8_MEM(cpu.a, cpu.bc); break;
@@ -38,7 +38,7 @@ void cpuExecuteOpcode(void) {
         case 0x0C: INC8(&cpu.c); break;
         case 0x0D: DEC8(&cpu.c); break;
         case 0x0E: LD(cpu.c, cpuFetch()); break;
-        case 0x0F: RR(&cpu.a, 1, 1); break;
+        case 0x0F: RR(&cpu.a, TRUE, TRUE); break;
         case 0x10: STOP(); break;
         case 0x11: LD(cpu.de, cpuFetch() | cpuFetch() << 8); break;
         case 0x12: LD_MEM_8(cpu.de, cpu.a); break;
@@ -46,7 +46,7 @@ void cpuExecuteOpcode(void) {
         case 0x14: INC8(&cpu.d); break;
         case 0x15: DEC8(&cpu.d); break;
         case 0x16: LD(cpu.d, cpuFetch()); break;
-        case 0x17: RL(&cpu.a, 0, 1); break;
+        case 0x17: RL(&cpu.a, FALSE, TRUE); break;
         case 0x18: JR((int8_t)cpuFetch(), NOC); break;
         case 0x19: ADD16(&cpu.hl, cpu.de); break;
         case 0x1A: LD_8_MEM(cpu.a, cpu.de); break;
@@ -54,7 +54,7 @@ void cpuExecuteOpcode(void) {
         case 0x1C: INC8(&cpu.e); break;
         case 0x1D: DEC8(&cpu.e); break;
         case 0x1E: LD(cpu.e, cpuFetch()); break;
-        case 0x1F: RR(&cpu.a, 0, 1); break;
+        case 0x1F: RR(&cpu.a, FALSE, TRUE); break;
         case 0x20: JR((int8_t)cpuFetch(), NZ); break;
         case 0x21: LD(cpu.hl, cpuFetch() | cpuFetch() << 8); break;
         case 0x22: LD_MEM_8(cpu.hl++, cpu.a); break;
@@ -75,8 +75,8 @@ void cpuExecuteOpcode(void) {
         case 0x31: LD(cpu.sp, cpuFetch() | cpuFetch() << 8); break;
         case 0x32: LD_MEM_8(cpu.hl--, cpu.a); break;
         case 0x33: INC16(cpu.sp); break;
-        case 0x34: INC8(&memory[cpu.hl]); break;
-        case 0x35: DEC8(&memory[cpu.hl]); break;
+        case 0x34: INC8(&memory.memory[cpu.hl]); break;
+        case 0x35: DEC8(&memory.memory[cpu.hl]); break;
         case 0x36: LD_MEM_8(cpu.hl, cpuFetch()); break;
         case 0x37: SCF(); break;
         case 0x38: JR((int8_t)cpuFetch(), C); break;
@@ -215,7 +215,7 @@ void cpuExecuteOpcode(void) {
         case 0xBD: CP(&cpu.a, cpu.l); break;
         case 0xBE: CP(&cpu.a, memoryRead(cpu.hl)); break;
         case 0xBF: CP(&cpu.a, cpu.a); break;
-        case 0xC0: RET(0, NZ); break;
+        case 0xC0: RET(FALSE, NZ); break;
         case 0xC1: POP(&cpu.bc); break;
         case 0xC2: JP(cpuFetch() | cpuFetch() << 8, NZ); break;
         case 0xC3: JP(cpuFetch() | cpuFetch() << 8, NOC); break;
@@ -223,22 +223,22 @@ void cpuExecuteOpcode(void) {
         case 0xC5: PUSH(cpu.bc); break;
         case 0xC6: ADD8(&cpu.a, cpuFetch()); break;
         case 0xC7: RST(0x00); break;
-        case 0xC8: RET(0, Z); break;
-        case 0xC9: RET(0, NOC); break;
+        case 0xC8: RET(FALSE, Z); break;
+        case 0xC9: RET(FALSE, NOC); break;
         case 0xCA: JP(cpuFetch() | cpuFetch() << 8, Z); break;
         case 0xCC: CALL(cpuFetch() | cpuFetch() << 8, Z); break;
         case 0xCD: CALL(cpuFetch() | cpuFetch() << 8, NOC); break;
         case 0xCE: ADC(&cpu.a, cpuFetch()); break;
         case 0xCF: RST(0x08); break;
-        case 0xD0: RET(0, NC); break;
+        case 0xD0: RET(FALSE, NC); break;
         case 0xD1: POP(&cpu.de); break;
         case 0xD2: JP(cpuFetch() | cpuFetch() << 8, NZ); break;
         case 0xD4: CALL(cpuFetch() | cpuFetch() << 8, NC); break;
         case 0xD5: PUSH(cpu.de); break;
         case 0xD6: SUB(&cpu.a, cpuFetch()); break;
         case 0xD7: RST(0x10); break;
-        case 0xD8: RET(0, C); break;
-        case 0xD9: RET(1, NOC); break;
+        case 0xD8: RET(FALSE, C); break;
+        case 0xD9: RET(TRUE, NOC); break;
         case 0xDA: JP(cpuFetch() | cpuFetch() << 8, C); break;
         case 0xDC: CALL(cpuFetch() | cpuFetch() << 8, C); break;
         case 0xDE: SBC(&cpu.a, cpuFetch()); break;
@@ -273,7 +273,7 @@ void cpuExecuteOpcode(void) {
 void cpuExecutePrefixOpcode(void) {
     uint8_t opcode = cpuFetch();
     uint8_t *reg;
-    uint8_t isRegA = 0;
+    uint8_t isRegA = FALSE;
 
     switch(opcode & 0x07) {
         case 0: reg = &cpu.b; break;
@@ -282,15 +282,15 @@ void cpuExecutePrefixOpcode(void) {
         case 3: reg = &cpu.e; break;
         case 4: reg = &cpu.h; break;
         case 5: reg = &cpu.l; break;
-        case 6: reg = &memory[cpu.hl]; break;
-        case 7: reg = &cpu.a; isRegA = 1; break;
+        case 6: reg = &memory.memory[cpu.hl]; break;
+        case 7: reg = &cpu.a; isRegA = TRUE; break;
     }
 
     switch(opcode & 0xF8) { // Opcode bitmask
-        case 0x00: RL(reg, 1, isRegA); break;
-        case 0x08: RR(reg, 1, isRegA); break;
-        case 0x10: RL(reg, 0, isRegA); break;
-        case 0x18: RR(reg, 0, isRegA); break;
+        case 0x00: RL(reg, TRUE, isRegA); break;
+        case 0x08: RR(reg, TRUE, isRegA); break;
+        case 0x10: RL(reg, FALSE, isRegA); break;
+        case 0x18: RR(reg, FALSE, isRegA); break;
         case 0x20: SLA(reg); break;
         case 0x28: SRA(reg); break;
         case 0x30: SWAP(reg); break;

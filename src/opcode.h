@@ -10,6 +10,11 @@ enum ConditionCode{
     NOC //No Condition
 };
 
+enum Bool {
+    FALSE,
+    TRUE
+};
+
 extern CPU cpu;
 
 //Load operations
