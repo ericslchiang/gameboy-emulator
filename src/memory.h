@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define ROM_BANK_0 0x0000
 #define ROM_BANK_N 0x4000
@@ -21,8 +22,12 @@ static const uint8_t nintendoLogo[] = {
     0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
 };
 
-//IO Defines
-#define IO_INTERRUPT 0XFF0F
+enum MBC {
+    MBC_NULL,
+    MBC_1,
+    MBC_2,
+    MBC_5,
+};
 
 typedef struct {
     union {  
@@ -42,9 +47,14 @@ typedef struct {
         };
         uint8_t memory[0xFFFF];
     };
+    uint8_t mbcType;
+    uint8_t currentROMBank;
+    uint8_t currentRAMBank;
 } MEMORY;
 
-MEMORY memory;
+MEMORY memory = {.currentROMBank = 1}; // ROM Bank should always be 1. ROM_BANK_0 is always loaded in memory
+static uint8_t **memoryROMBank;
+static uint8_t **memoryRAMBank;
 
 void memoryLoadBootROM(void);
 void memoryLoadCartridge(void);

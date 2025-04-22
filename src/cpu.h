@@ -42,6 +42,12 @@ typedef struct {
     uint16_t sp;
 } CPU;
 
+// // Maybe use for readability
+// typedef uint8_t u8;
+// typedef uint16_t u16;
+// typedef int8_t i8;
+// typedef int16_t i16;
+
 void cpuInit(void);
 static uint8_t cpuFetch(void);
 void cpuExecuteOpcode(void);
