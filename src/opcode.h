@@ -10,10 +10,8 @@ enum ConditionCode{
     NOC //No Condition
 };
 
-enum Bool {
-    FALSE,
-    TRUE
-};
+#define FALSE 0
+#define TRUE 1
 
 extern CPU cpu;
 

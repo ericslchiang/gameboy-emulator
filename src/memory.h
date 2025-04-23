@@ -24,8 +24,9 @@ static const uint8_t nintendoLogo[] = {
 
 enum MBC {
     MBC_NULL,
-    MBC_1,
+    MBC_1, // No support for multi-game carts (MBC1M)
     MBC_2,
+    MBC_3,
     MBC_5,
 };
 
@@ -47,17 +48,23 @@ typedef struct {
         };
         uint8_t memory[0xFFFF];
     };
-    uint8_t mbcType;
-    uint8_t currentROMBank;
-    uint8_t currentRAMBank;
 } MEMORY;
 
-MEMORY memory = {.currentROMBank = 1}; // ROM Bank should always be 1. ROM_BANK_0 is always loaded in memory
-static uint8_t **memoryROMBank;
-static uint8_t **memoryRAMBank;
+typedef struct {
+    uint8_t mbcType;
+    uint8_t numROMBank;
+    uint8_t numRAMBank;
+    uint8_t currentROMBank;
+    uint8_t currentRAMBank; // This is a 2-bit register
+    uint8_t memoryExternalRAMEnable;
+    uint8_t bankMode;
+} CARTRIDGE;
+
+static uint8_t *memoryROMBank;
+static uint8_t *memoryRAMBank;
 
 void memoryLoadBootROM(void);
-void memoryLoadCartridge(void);
-void memoryVerifyCartridge(void);
+uint8_t memoryLoadCartridge(void);
+void memoryLoadCartridgeHeader(void);
 uint8_t memoryRead(uint16_t address);
 void memoryWrite(uint16_t address, uint8_t byte);
