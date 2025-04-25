@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define ROM_BANK_0 0x0000
 #define ROM_BANK_N 0x4000
@@ -50,13 +51,20 @@ typedef struct {
     };
 } MEMORY;
 
+/*
+    currentRAMBank: 2-bit register
+    bankMode: For MBC_1, this 1-bit register selects between ROM Banking (0) and RAM Banking mode (1), 
+        the program may freely switch between the two modes.
+        ROM Banking Mode = 8KB RAM, 2MB ROM (default)
+        RAM Banking Mode = 32KB RAM, 512KB ROM
+*/
 typedef struct {
     uint8_t mbcType;
     uint8_t numROMBank;
     uint8_t numRAMBank;
     uint8_t currentROMBank;
-    uint8_t currentRAMBank; // This is a 2-bit register
-    uint8_t memoryExternalRAMEnable;
+    uint8_t currentRAMBank; 
+    uint8_t externalRAMEnable;
     uint8_t bankMode;
 } CARTRIDGE;
 
@@ -68,3 +76,4 @@ uint8_t memoryLoadCartridge(void);
 void memoryLoadCartridgeHeader(void);
 uint8_t memoryRead(uint16_t address);
 void memoryWrite(uint16_t address, uint8_t byte);
+void memoryMBCWrite(uint16_t address, uint8_t byte);

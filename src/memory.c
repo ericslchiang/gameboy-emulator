@@ -1,7 +1,15 @@
 #include "memory.h"
 
 MEMORY memory;
-CARTRIDGE cartridge = {0}; // ROM Bank should always be 1. ROM_BANK_0 is always loaded in memory
+CARTRIDGE cartridge = {
+    .mbcType = 0,
+    .numROMBank = 0,
+    .numRAMBank = 0,
+    .currentROMBank = 1, // ROM Bank should always be 1. ROM_BANK_0 is always loaded in memory
+    .currentRAMBank = 0, 
+    .externalRAMEnable = 0,
+    .bankMode = 0, 
+}; 
 
 void memoryLoadBootROM(void) {
     FILE *filePointer = fopen("./roms/dmg_boot.bin", "rb");
@@ -37,7 +45,7 @@ uint8_t memoryLoadCartridge(void) {
         return 0;
     }
 
-    // Read ROM content into ROM bank
+    // Read cartridge into ROM bank
     uint8_t byte;
     uint16_t i = 0;
     fseek(filePointer, ROM_BANK_N, SEEK_SET);
@@ -45,8 +53,14 @@ uint8_t memoryLoadCartridge(void) {
         memoryROMBank[i] = byte;
         i++;
     }
-
     fclose(filePointer);
+    
+    // Copy ROM bank 1 into CPU Memory
+    // memcpy(memory.romBankN, memoryROMBank, sizeof(memory.romBankN)); 
+    /*
+    Not sure if copying an entire ROM Bank into CPU memory is the best way
+    Maybe in memoryRead() we just read from ROM Bank memory instead. FIGURE THIS OUT. 
+    */
     return 1;
 }
 
@@ -118,7 +132,7 @@ void memoryLoadCartridgeHeader(void) {
     headerChecksum = cartridgeHeader[0x4D];
 
     // TODO: FIND OUT WHEN TO CALL FREE() ON MALLOC'd MEMORY
-    memoryROMBank = (uint8_t *)calloc(1024 * 16 * cartridge.numROMBank, sizeof(uint8_t));
+    memoryROMBank = (uint8_t *)calloc(1024 * 16 * cartridge.numROMBank, sizeof(uint8_t)); // Each ROM bank is 16 kilobytes
     memoryRAMBank = (uint8_t *)calloc(1024 * 8 * cartridge.numRAMBank, sizeof(uint8_t)); 
     
     printf("Game Title: %s\n", gameTitle);
@@ -130,70 +144,67 @@ void memoryLoadCartridgeHeader(void) {
 }
 
 uint8_t memoryRead(uint16_t address) {
-    if (ROM_BANK_N < address < VRAM) { // Check if we are reading from memory bank
-
-    }
-    if (MEM_PROHIBITED < address < MEM_IO_REGISTERS ||
-        RAM_ECHO < address < OAM
-    ) {
+    if (ROM_BANK_N < address < VRAM) { // Check if we are reading from ROM bank
+        return memoryROMBank[(cartridge.currentROMBank - 1) * 16 * 1024 + address - ROM_BANK_N];
+    } else if (RAM_BANK < address < WRAM_0 && cartridge.externalRAMEnable) { // Check if we are reading from external RAM Bank
+        return memoryRAMBank[cartridge.currentRAMBank * 1024 * 8 + address - RAM_BANK];
+    } else if (RAM_ECHO < address < OAM) { // Return value from WRAM_0
+        return memory.wRam0[address - RAM_ECHO];
+    } else if (MEM_PROHIBITED < address < MEM_IO_REGISTERS) {
         printf("Line %d, %s : \"Read from prohibited memory region: 0x%04X\"", __LINE__ - 1, __FILE__, address);
         return 0;
+    } else {
+        return memory.memory[address];
     }
-
-    // TODO: Figure out checks for reading from memory
-    return memory.memory[address];
 }
 
 void memoryWrite(uint16_t address, uint8_t byte) {
     if (address < VRAM) { // If writes to ROM check for MBC operations
-        if (cartridge.mbcType == MBC_NULL) {
-            printf("Line %d, %s : \"Prohibited write to ROM: 0x%04X\"", __LINE__ - 1, __FILE__, address);
-            return;
-        }
-
-        // External RAM enable
-        if (address < 0x2000 && (byte & 0x0F) == 0x0A) {
-            cartridge.memoryExternalRAMEnable = 1;
-        } else if (0x2000 < address < ROM_BANK_N) { // Set active ROM bank
-            if (byte & 0x1F == 0x00) { // If ROM bank 0 is selected, automatically change to ROM bank 1
-                cartridge.currentROMBank = 0x01; 
-            } else {
-                if (cartridge.numROMBank > 0x1F) { // If ROM bank is larger than 5 bits, grab 2 other bits from currentRAMBank register
-                    cartridge.currentROMBank = (cartridge.currentRAMBank << 5) + byte;
-                } else { 
-                    uint8_t romBankMask = 0x1F;
-                    while (byte & romBankMask > cartridge.numROMBank) { // If requested bank is larger than number of ROM banks, mask leftmost
-                                                                        // non-zero bit until requested bank is smaller than number of ROM banks
-                        romBankMask >>= 1; 
-                    }
-                    cartridge.currentROMBank = byte & romBankMask;
-                }
-                // TODO: Theres some finicky issues with MBC types where the above code in incorrect
-            }
-        } else if (ROM_BANK_N < address < 0x6000) { // Set selected RAM bank 
-            cartridge.currentRAMBank = byte & 0x03;
-        } else if (0x6000 < address < VRAM) { // Sets banking mode
-            cartridge.bankMode = byte & 0x01; 
-        }
-
+        memoryMBCWrite(address, byte);
+    } else if (RAM_BANK < address < WRAM_0 && cartridge.externalRAMEnable) { // Check if external RAM is enabled before writing to it
+        memoryRAMBank[cartridge.currentRAMBank * 8 * 1024 + address - RAM_BANK] = byte;
     } else if (RAM_ECHO < address < OAM) { // Writes to ECHO_RAM will also write to WRAM
         memory.echo[address - RAM_ECHO] = byte;
         memory.memory[WRAM_0 + (address - RAM_ECHO)] = byte; //WRAM_0 + (address - RAM_ECHO) -> address - 0x2000 
     } else if (MEM_PROHIBITED < address < MEM_IO_REGISTERS) {
         printf("Line %d, %s : \"Write to prohibited memory region: 0x%04X\"", __LINE__ - 1, __FILE__, address);
-        return;
     } else {
         memory.memory[address] = byte;
     } 
 }
 
 void memoryMBCWrite (uint16_t address, uint8_t byte) {
-    switch(cartridge.mbcType) {
-        case MBC_1:
-            break;
-        case MBC_2:
-            break;
-        case MBC_5:
-            break;
+    if (cartridge.bankMode = MBC_NULL) {
+        printf("Line %d, %s : \"Prohibited write to ROM: 0x%04X\"", __LINE__ - 1, __FILE__, address);
+        return;
+    }
+        
+    // External RAM enable/disable
+    if (address < 0x2000) {
+        if ((cartridge.mbcType == MBC_2) && (address & 0b00010000 != 0)) // MBC_2 requires bit 4 of the address to be 0 to enable external RAM
+            return;
+        cartridge.externalRAMEnable = byte & 0x0F == 0x0A ? 1 : 0; // The byte value being written has to be 0x0A to enable external RAM
+    } else if (0x2000 < address < ROM_BANK_N) { // Set active ROM bank
+        // MBC_2 can only have <16 ROM banks, so only least 4 significant bits are changed
+        if (cartridge.bankMode = MBC_2) {
+            cartridge.currentROMBank = byte & 0x0F;
+            if (cartridge.currentROMBank == 0) cartridge.currentROMBank++;
+            return;
+        }
+        cartridge.currentROMBank &= 0b11100000;
+        cartridge.currentROMBank |= byte & 0x1F;
+        if (cartridge.bankMode == 0) cartridge.currentRAMBank = 0; 
+    } else if (ROM_BANK_N < address < 0x6000) { // Set selected RAM bank 
+        if (cartridge.bankMode == 0) { // Change bit 5 & 6 of current ROM Bank
+            cartridge.currentROMBank &= 0x1F;
+            cartridge.currentROMBank |= byte & 0b11100000;
+            if (cartridge.currentROMBank == 0) cartridge.currentROMBank++;
+        } else { // Change curent RAM Bank
+            cartridge.currentRAMBank = byte & 0x03;
+        }
+        cartridge.currentRAMBank = byte & 0x03;
+    } else if (0x6000 < address < VRAM) { // Sets banking mode
+        cartridge.bankMode = byte & 0x01;
+        if (cartridge.bankMode == 0) cartridge.currentRAMBank = 0; 
     }
 }
