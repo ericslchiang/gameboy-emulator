@@ -76,4 +76,7 @@ uint8_t memoryLoadCartridge(void);
 void memoryLoadCartridgeHeader(void);
 uint8_t memoryRead(uint16_t address);
 void memoryWrite(uint16_t address, uint8_t byte);
-void memoryMBCWrite(uint16_t address, uint8_t byte);
+void memoryMBC1Write(uint16_t address, uint8_t byte);
+void memoryMBC2Write(uint16_t address, uint8_t byte);
+void memoryMBC3Write(uint16_t address, uint8_t byte);
+void memoryMBC5Write(uint16_t address, uint8_t byte);
