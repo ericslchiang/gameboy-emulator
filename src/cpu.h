@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 CPU cpu;
+extern MEMORY memory;
 
 #define FLAG_ZERO 7
 #define FLAG_SUB 6

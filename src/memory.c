@@ -143,6 +143,10 @@ void memoryLoadCartridgeHeader(void) {
 }
 
 uint8_t memoryRead(uint16_t address) {
+    // Increment clock
+    emulator.mCycles++;
+    emulator.tCycles+=4;
+
     if (ROM_BANK_N < address < VRAM) { // Check if we are reading from ROM bank
         return memoryROMBank[(cartridge.currentROMBank - 1) * 16 * 1024 + address - ROM_BANK_N];
     } else if (RAM_BANK < address < WRAM_0) { // Check if we are reading from external RAM Bank
@@ -163,6 +167,10 @@ uint8_t memoryRead(uint16_t address) {
 }
 
 void memoryWrite(uint16_t address, uint8_t byte) {
+    // Increment clock
+    emulator.mCycles++;
+    emulator.tCycles+=4;
+    
     if (address < VRAM) { // If writes to ROM check for MBC operations
         switch (cartridge.mbcType) {
             case MBC_1: memoryMBC1Write(address, byte); break;
