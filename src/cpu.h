@@ -1,8 +1,6 @@
 #pragma once
 #include <stdint.h>
-
-CPU cpu;
-extern MEMORY memory;
+#include "memory.h"
 
 #define FLAG_ZERO 7
 #define FLAG_SUB 6
@@ -49,7 +47,10 @@ typedef struct {
 // typedef int8_t i8;
 // typedef int16_t i16;
 
+extern CPU cpu;
+// extern MEMORY memory;
+
 void cpuInit(void);
-static uint8_t cpuFetch(void);
+uint8_t cpuFetch(void);
 void cpuExecuteOpcode(void);
 void cpuExecutePrefixOpcode(void);

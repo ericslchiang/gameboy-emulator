@@ -30,7 +30,7 @@ void memoryLoadBootROM(void) {
 }
 
 uint8_t memoryLoadCartridge(void) {
-    FILE *filePointer = fopen("./roms/tetris.gb", "rb"); // REPLACE GAME NAME WITH main argc VALUES
+    FILE *filePointer = fopen("./roms/cpu_instrs.gb", "rb"); // REPLACE GAME NAME WITH main argc VALUES
     if(filePointer == NULL) {
         printf("Line %d: ", __LINE__ - 1);
         printf("\"Error loading Boot ROM\" in file %s\n", __FILE__);
@@ -170,7 +170,7 @@ void memoryWrite(uint16_t address, uint8_t byte) {
     // Increment clock
     emulator.mCycles++;
     emulator.tCycles+=4;
-    
+
     if (address < VRAM) { // If writes to ROM check for MBC operations
         switch (cartridge.mbcType) {
             case MBC_1: memoryMBC1Write(address, byte); break;
@@ -232,3 +232,6 @@ void memoryMBC2Write (uint16_t address, uint8_t byte) {
         printf("Undefined MBC_2 behaviour writing to address: %04X\n", address);
     }
 }
+
+void memoryMBC3Write(uint16_t address, uint8_t byte){}
+void memoryMBC5Write(uint16_t address, uint8_t byte){}

@@ -13,7 +13,7 @@ enum ConditionCode{
 #define FALSE 0
 #define TRUE 1
 
-extern CPU cpu;
+// extern CPU cpu;
 
 //Load operations
 #define LD(reg, val) (reg) = (val)

@@ -1,6 +1,8 @@
 #include "cpu.h"
 #include "opcode.h"
 
+CPU cpu;
+
 void cpuInit(void) {
     cpu.IME = FALSE;
     cpu.a = 0X01;
@@ -12,10 +14,10 @@ void cpuInit(void) {
     cpu.h = 0X01;
     cpu.l = 0X4D;
     cpu.sp = 0xFFFE;
-    cpu.pc = 0x0100;
+    cpu.pc = 0x0000;
 }
 
-static uint8_t cpuFetch(void) {
+uint8_t cpuFetch(void) {
     return memoryRead(cpu.pc++);
 }
 
@@ -30,8 +32,8 @@ void cpuExecuteOpcode(void) {
         case 0x04: INC8(&cpu.b); break;
         case 0x05: DEC8(&cpu.b); break;
         case 0x06: LD_8_MEM(cpu.b, cpuFetch()); break;
-        case 0x07: RL(cpu.a, TRUE, TRUE); break;
-        case 0x08: LD_SP(); break;
+        case 0x07: RL(&cpu.a, TRUE, TRUE); break;
+        case 0x08: LD_MEM_SP(); break;
         case 0x09: ADD16(&cpu.hl, cpu.bc); break;
         case 0x0A: LD_8_MEM(cpu.a, cpu.bc); break;
         case 0x0B: DEC16(cpu.bc); break;

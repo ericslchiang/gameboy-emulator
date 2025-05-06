@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <emulator.h>
+
+#include "emulator.h"
 
 #define ROM_BANK_0 0x0000
 #define ROM_BANK_N 0x4000
@@ -69,10 +70,13 @@ typedef struct {
     uint8_t bankMode;
 } CARTRIDGE;
 
+extern MEMORY memory;
+extern CARTRIDGE cartridge;
+
 static uint8_t *memoryROMBank;
 static uint8_t *memoryRAMBank;
 
-extern EMULATOR emulator;
+// extern EMULATOR emulator;
 
 void memoryLoadBootROM(void);
 uint8_t memoryLoadCartridge(void);

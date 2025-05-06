@@ -2,7 +2,8 @@
 #include <stdint.h>
 
 enum EmulatorState {
-
+    EMU_STOP,
+    EMU_RUN,
 };
 
 typedef struct {
@@ -11,4 +12,4 @@ typedef struct {
     uint8_t state;
 } EMULATOR;
 
-EMULATOR emulator;
+extern EMULATOR emulator;

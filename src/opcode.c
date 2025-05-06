@@ -296,7 +296,7 @@ void HALT(void) {
     if (cpu.IME) {
         //Enter Low Power Mode
     } else {
-        if (memoryRead(MEM_INTERRUPT_EN) & memoryRead(IO_INTERRUPT)) { // Some Interrupts Pending
+        if (memoryRead(MEM_INTERRUPT_EN) & memoryRead(0xFF00)) { // Some Interrupts Pending
             //CPU continues execution, but reads the next byte twice due to hardware bug
         } else { //No interrupts pending
 
