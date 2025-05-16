@@ -2,6 +2,7 @@
 #include "opcode.h"
 
 CPU cpu;
+uint32_t ticks;
 
 void cpuInit(void) {
     cpu.IME = FALSE;

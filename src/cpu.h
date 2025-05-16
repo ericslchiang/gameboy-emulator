@@ -48,7 +48,7 @@ typedef struct {
 // typedef int16_t i16;
 
 extern CPU cpu;
-// extern MEMORY memory;
+extern uint32_t ticks;
 
 void cpuInit(void);
 uint8_t cpuFetch(void);

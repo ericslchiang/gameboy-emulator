@@ -16,7 +16,6 @@ void memoryLoadBootROM(void) {
     if(filePointer == NULL) {
         printf("Line %d: ", __LINE__ - 1);
         printf("\"Error loading Boot ROM\" in file %s\n", __FILE__);
-        fclose(filePointer);
         return;
     }
     
@@ -34,16 +33,14 @@ uint8_t memoryLoadCartridge(void) {
     if(filePointer == NULL) {
         printf("Line %d: ", __LINE__ - 1);
         printf("\"Error loading Boot ROM\" in file %s\n", __FILE__);
-        fclose(filePointer);
         return 0;
     }
     
     // Read cartridge into ROM bank
     uint8_t byte;
-    uint16_t i = 0;
+    uint32_t i = 0;
     while (fread(&byte, sizeof(uint8_t), 1, filePointer) > 0) {
-        memoryROMBank[i] = byte;
-        i++;
+        memoryROMBank[i++] = byte;
     }
     fclose(filePointer);
 
@@ -62,10 +59,9 @@ uint8_t memoryLoadCartridge(void) {
 void memoryLoadCartridgeHeader(void) {
     uint8_t cartridgeHeader[0x50] = {0}; // Cartridge header is located in the rom file from 0x100 ~ 0x14F
 
-    FILE *filePointer = fopen("./roms/tetris.gb", "rb"); // REPLACE GAME NAME WITH main argc VALUES
+    FILE *filePointer = fopen("./roms/cpu_instrs.gb", "rb"); // REPLACE GAME NAME WITH main argc VALUES
     if(filePointer == NULL) {
         printf("Line %d: Error opening ROM in file %s\n", __LINE__ - 1, __FILE__);
-        fclose(filePointer);
         return;
     }
 
@@ -127,11 +123,11 @@ void memoryLoadCartridgeHeader(void) {
     headerChecksum = cartridgeHeader[0x4D];
 
     // TODO: FIND OUT WHEN TO CALL FREE() ON MALLOC'd MEMORY
-    memoryROMBank = (uint8_t *)calloc(1024 * 16 * cartridge.numROMBank, sizeof(uint8_t)); // Each ROM bank is 16 kilobytes
+    memoryROMBank = calloc(1024 * 16 * cartridge.numROMBank, sizeof(uint8_t)); // Each ROM bank is 16 kilobytes
     if (cartridge.mbcType == MBC_2) {
-        memoryRAMBank = (uint8_t *)calloc(512, sizeof(uint8_t)); // MBC_2 has built in RAM of 512 half-bytes
+        memoryRAMBank = calloc(512, sizeof(uint8_t)); // MBC_2 has built in RAM of 512 half-bytes
     } else {
-        memoryRAMBank = (uint8_t *)calloc(1024 * 8 * cartridge.numRAMBank, sizeof(uint8_t)); 
+        memoryRAMBank = calloc(1024 * 8 * cartridge.numRAMBank, sizeof(uint8_t)); 
     }
     
     printf("Game Title: %s\n", gameTitle);

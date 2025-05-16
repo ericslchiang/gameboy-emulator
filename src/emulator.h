@@ -9,6 +9,7 @@ enum EmulatorState {
 typedef struct {
     uint64_t tCycles;
     uint64_t mCycles;
+    uint64_t ppuCycles;
     uint8_t state;
 } EMULATOR;
 
