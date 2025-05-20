@@ -1,15 +1,12 @@
 #include "ppu.h"
 
-const COLOUR colourPalette[4] = {
-    {255, 255, 255}, // White
-    {192, 192, 192}, // Light grey
-    {96, 96, 96}, // Dark grey
-    {0, 0, 0}, // Black
+const uint16_t colourPalette[4] = {
+    0xFFFF, // White
+    0xAAAA, // Light grey
+    0x5555, // Dark grey
+    0x000, // Black
 };
-COLOUR backgroundPalette[4];
-COLOUR spritePalette[2][4];
-COLOUR frameBuffer[LCD_DISPLAY_WIDTH][LCD_DISPLAY_HEIGHT];
-uint8_t tiles[384][8][8];
+uint16_t frameBuffer[LCD_DISPLAY_WIDTH * LCD_DISPLAY_HEIGHT];
 PPU ppu;
 
 void ppuStep(void) {
@@ -108,12 +105,12 @@ void ppuRenderScanline(void) {
         uint8_t colourID = getBit(colourBit, tileDataUpper) << 1 | getBit(colourBit, tileDataLower);
         
         // write pixel into frame buffer
-        frameBuffer[i][ppu.ly] = ppuGetColour(colourID, 0xFF47); // 0xFF47 is palette used for background/window
+        frameBuffer[ppu.ly * LCD_DISPLAY_WIDTH + i] = ppuGetColour(colourID, 0xFF47); // 0xFF47 is palette used for background/window
     }
 }
 
 // This function takes a colourID from the current tile and fetches a colour from a changing palette using it
-COLOUR ppuGetColour(uint8_t colourID, uint16_t paletteAddr) {
+uint16_t ppuGetColour(uint8_t colourID, uint16_t paletteAddr) {
     uint8_t palette = memoryRead(paletteAddr);
     uint8_t colourIndex = getBit(colourID * 2 + 1, palette) << 1 | getBit(colourID * 2, palette);
 
@@ -163,7 +160,7 @@ void ppuRenderSprite(void) {
                     sprite.xPos + 7 - j > 160 || 
                     sprite.xPos + 7 - j <= 0 ||
                     // Background take higher priority and background colour is not white
-                    (sprite.priority && frameBuffer[sprite.xPos + 7 - j][ppu.ly].b != 255)
+                    (sprite.priority && frameBuffer[sprite.xPos + 7 - j + ppu.ly * LCD_DISPLAY_WIDTH] != 0xFFFF)
                 ) {
                     continue;
                 }
@@ -174,13 +171,13 @@ void ppuRenderSprite(void) {
 
                 uint8_t colourID = getBit(colourBit, spriteDataUpper) << 1 | getBit(colourBit, spriteDataLower);
                 uint16_t colourAddr = sprite.palette ? 0xFF49 : 0xFF48;
-                COLOUR colour = ppuGetColour(colourID, colourAddr);
+                uint16_t colour = ppuGetColour(colourID, colourAddr);
                 
                 // Sprite pixels of WHITE are treated as transparent. White has values {255, 255, 255}.
-                if (colour.r == 255) {
+                if (colour == 0xFFFF) {
                     continue;
                 }
-                frameBuffer[sprite.xPos + 7 - j][ppu.ly] = colour;
+                frameBuffer[sprite.xPos + 7 - j + ppu.ly * LCD_DISPLAY_WIDTH] = colour;
             }
         }
     }
@@ -202,4 +199,27 @@ Some notes about PPU rendering
 
 static bool getBit(uint8_t bitPos, uint8_t byte) {
     return byte & (1 << bitPos) ? 1 : 0;
+}
+
+// Initializing SDL objects
+void sdlInitialize(SDL_OBJ *sdl) {
+    sdl->window = SDL_CreateWindow("Gameboy Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, LCD_DISPLAY_WIDTH * PIXEL_SIZE, LCD_DISPLAY_HEIGHT * PIXEL_SIZE, SDL_WINDOW_SHOWN);
+    sdl->renderer = SDL_CreateRenderer(sdl->window, -1, SDL_RENDERER_ACCELERATED);
+    sdl->texture = SDL_CreateTexture(sdl->renderer, SDL_PIXELFORMAT_ARGB4444, SDL_TEXTUREACCESS_STREAMING, LCD_DISPLAY_WIDTH, LCD_DISPLAY_HEIGHT);
+    SDL_SetRenderDrawColor(sdl->renderer, 0, 0, 0, 0);
+    SDL_RenderClear(sdl->renderer);
+}
+
+// De-initializing SDL objects
+void sdlDeinitialize(SDL_OBJ *sdl) {
+    SDL_DestroyTexture(sdl->texture);
+    SDL_DestroyRenderer(sdl->renderer);
+    SDL_DestroyWindow(sdl->window);
+    SDL_Quit();
+}
+
+void sdlRender(SDL_OBJ *sdl, uint16_t *pixels) {
+    SDL_UpdateTexture(sdl->texture, NULL, pixels, 2 * LCD_DISPLAY_WIDTH);
+    SDL_RenderCopy(sdl->renderer, sdl->texture, NULL, NULL);
+    SDL_RenderPresent(sdl->renderer);
 }

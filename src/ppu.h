@@ -5,10 +5,12 @@
 #include "memory.h"
 #include "cpu.h"
 #include "emulator.h"
+#include <SDL2/SDL.h>
 
 #define LCD_SIZE 256
 #define LCD_DISPLAY_WIDTH 160
 #define LCD_DISPLAY_HEIGHT 144
+#define PIXEL_SIZE 3
 #define SPRITE_MAX 40
 #define SPRITE_MAX_SCANLINE 10
 #define LCD_FPS 60
@@ -36,6 +38,12 @@ enum PPUModes {
 };
 
 typedef struct {
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Texture *texture;
+} SDL_OBJ;
+
+typedef struct {
     uint8_t control;
     uint8_t scrollX;
     uint8_t scrollY;
@@ -57,34 +65,16 @@ typedef struct {
     };
 } SPRITE;
 
-typedef struct {
-    uint8_t color : 2; // 0 = white, 1 = light grey, 2 = dark grey, 3 = black 
-    uint8_t priority : 1;
-} PIXEL;
 
-typedef struct {
-    uint8_t r, g, b;
-} COLOUR;
+const uint16_t colourPalette[4];
+extern uint16_t frameBuffer[LCD_DISPLAY_WIDTH * LCD_DISPLAY_HEIGHT];
 
-uint8_t pixelMap[LCD_SIZE][LCD_SIZE] = {0};
-SPRITE spriteBuffer[10]; // During mode 2 OAM Scan, sprites to be rendered onto the current scanline are pushed into this buffer
-uint8_t spriteBufferIndex = 0;
-PIXEL backgroundFIFO[16]; // During mode 3 Draw, pixels in this FIFO are pushed to the LCD
-PIXEL spriteFIFO[16]; // During mode 3 Draw, pixels in this FIFO are pushed to the LCD
-
-extern const COLOUR colourPalette[4];
-extern COLOUR backgroundPalette[4];
-extern COLOUR spritePalette[2][4];
-extern COLOUR frameBuffer[LCD_DISPLAY_WIDTH][LCD_DISPLAY_HEIGHT];
-extern uint8_t tiles[384][8][8]; // Stored at beginning of VRAM at 0x8000~0x97FF
-
-void ppuStep(void);
-PIXEL ppuFetchPixel(void);
-void ppuHBlank(void);
-void ppuVBlank(void); // Pads out draw time of each scanline to be 456 T-cycles;
-void ppuOAMScan(void);
+void ppuStep(void);// Pads out draw time of each scanline to be 456 T-cycles;
 void ppuRenderScanline(void);
 void ppuRenderSprite(void);
-COLOUR ppuGetColour(uint8_t colourID, uint16_t paletteAddr);
+uint16_t ppuGetColour(uint8_t colourID, uint16_t paletteAddr);
 static bool getBit(uint8_t bitPos, uint8_t byte);
+void sdlInitialize(SDL_OBJ *sdl);
+void sdlDeinitialize(SDL_OBJ *sdl);
+void sdlRender(SDL_OBJ *sdl, uint16_t *pixels);
 
