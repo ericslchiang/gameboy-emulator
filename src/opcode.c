@@ -109,18 +109,18 @@ void CP(uint8_t *reg, uint8_t val){
 
 void INC8(uint8_t *reg) {
     uint8_t before = *reg;
-    *reg++;
+    (*reg)++;
 
     if (before & 0xF == 0xF)
         cpu.f |= 1 << FLAG_HALF_CARRY;
     if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO;
+        cpu.f |= 1 << FLAG_ZERO; // TODO: Z FLAG has to be cleared if result is not 0
     cpu.f &= ~(1 << FLAG_SUB);
 }
 
 void DEC8(uint8_t *reg) {
     uint8_t before = *reg;
-    *reg--;
+    (*reg)--;
 
     if (before & 0xF == 0x0)
         cpu.f |= 1 << FLAG_HALF_CARRY;
@@ -325,7 +325,7 @@ void DAA(void) {
     cpu.f &= ~(1 << FLAG_HALF_CARRY);
 }
 
-void NOP(void) {;}
+void NOP(void) {}   
 void STOP(void) {
     //Not sure if need to implement anything
 }

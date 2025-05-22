@@ -13,8 +13,6 @@ enum ConditionCode{
 #define FALSE 0
 #define TRUE 1
 
-// extern CPU cpu;
-
 //Load operations
 #define LD(reg, val) (reg) = (val)
 #define LD_8_MEM(reg, address) (reg) = memoryRead(address) // Write cpu register from memory

@@ -6,16 +6,13 @@ uint32_t ticks;
 
 void cpuInit(void) {
     cpu.IME = FALSE;
-    cpu.a = 0X01;
-    cpu.f = 0XB0;
-    cpu.b = 0X00;
-    cpu.c = 0X13;
-    cpu.d = 0X00;
-    cpu.e = 0XD8;
-    cpu.h = 0X01;
-    cpu.l = 0X4D;
+    cpu.af = 0x1180;
+    cpu.bc = 0x0000;
+    cpu.de = 0xFF56;
+    cpu.hl = 0x000D;
     cpu.sp = 0xFFFE;
-    cpu.pc = 0x0000;
+    // cpu.pc = 0x0000; // Boot ROM ends execution at 0x100, but it will hang if doesn't detect PPU interrupt signals
+    cpu.pc = 0x0100; 
 }
 
 uint8_t cpuFetch(void) {
@@ -26,7 +23,7 @@ void cpuExecuteOpcode(void) {
     uint8_t opcode = cpuFetch();
     switch(opcode) {
         case 0xCB: cpuExecutePrefixOpcode(); break;
-        case 0x00: NOP(); break;
+        case 0x00: break; //NOP
         case 0x01: LD(cpu.bc, cpuFetch() | cpuFetch() << 8); break;
         case 0x02: LD_MEM_8(cpu.bc, cpu.a); break;
         case 0x03: INC16(cpu.bc); break;
