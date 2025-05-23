@@ -32,7 +32,7 @@ void cpuExecuteOpcode(void) {
         case 0x06: LD_8_MEM(cpu.b, cpuFetch()); break;
         case 0x07: RL(&cpu.a, TRUE, TRUE); break;
         case 0x08: LD_MEM_SP(); break;
-        case 0x09: ADD16(&cpu.hl, cpu.bc); break;
+        case 0x09: ADD16(cpu.bc); break;
         case 0x0A: LD_8_MEM(cpu.a, cpu.bc); break;
         case 0x0B: DEC16(cpu.bc); break;
         case 0x0C: INC8(&cpu.c); break;
@@ -48,7 +48,7 @@ void cpuExecuteOpcode(void) {
         case 0x16: LD(cpu.d, cpuFetch()); break;
         case 0x17: RL(&cpu.a, FALSE, TRUE); break;
         case 0x18: JR((int8_t)cpuFetch(), NOC); break;
-        case 0x19: ADD16(&cpu.hl, cpu.de); break;
+        case 0x19: ADD16(cpu.de); break;
         case 0x1A: LD_8_MEM(cpu.a, cpu.de); break;
         case 0x1B: DEC16(cpu.de); break;
         case 0x1C: INC8(&cpu.e); break;
@@ -64,7 +64,7 @@ void cpuExecuteOpcode(void) {
         case 0x26: LD(cpu.h, cpuFetch()); break;
         case 0x27: DAA(); break;
         case 0x28: JR((int8_t)cpuFetch(), Z); break;
-        case 0x29: ADD16(&cpu.hl, cpu.hl); break;
+        case 0x29: ADD16(cpu.hl); break;
         case 0x2A: LD_8_MEM(cpu.a, cpu.hl++); break;
         case 0x2B: DEC16(cpu.hl); break;
         case 0x2C: INC8(&cpu.l); break;
@@ -80,7 +80,7 @@ void cpuExecuteOpcode(void) {
         case 0x36: LD_MEM_8(cpu.hl, cpuFetch()); break;
         case 0x37: SCF(); break;
         case 0x38: JR((int8_t)cpuFetch(), C); break;
-        case 0x39: ADD16(&cpu.hl, cpu.sp); break;
+        case 0x39: ADD16(cpu.sp); break;
         case 0x3A: LD_8_MEM(cpu.a, cpu.hl--); break;
         case 0x3B: DEC16(cpu.sp); break;
         case 0x3C: INC8(&cpu.a); break;
@@ -249,7 +249,7 @@ void cpuExecuteOpcode(void) {
         case 0xE5: PUSH(cpu.hl); break;
         case 0xE6: AND(&cpu.a, cpuFetch()); break;
         case 0xE7: RST(0x20); break;
-        case 0xE8: ADD_SP(&cpu.sp, cpuFetch()); break;
+        case 0xE8: ADD_SP(); break;
         case 0xE9: JP(cpu.hl, NOC); break;
         case 0xEA: LD_MEM_8(cpuFetch() | cpuFetch() << 8, cpu.a); break;
         case 0xEE: XOR(&cpu.a, cpuFetch()); break;

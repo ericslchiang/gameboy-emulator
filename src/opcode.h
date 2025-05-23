@@ -27,7 +27,7 @@ void LD_HL_SP(void);
 //Arithmetic operations
 void ADD8(uint8_t *reg, uint8_t val);
 void SUB(uint8_t *reg, uint8_t val);
-void ADD16(uint16_t *reg, uint16_t val);
+void ADD16(uint16_t val);
 void ADC(uint8_t *reg, uint8_t val);
 void SBC(uint8_t *reg, uint8_t val);
 void CP(uint8_t *reg, uint8_t val);
@@ -57,7 +57,7 @@ void RST(uint8_t vec); //Value of vec will be determined by the opcode value
 // Stack manipulation commands
 void POP(uint16_t *reg);
 void PUSH(uint16_t reg);
-void ADD_SP(uint16_t *reg, int8_t val);
+void ADD_SP(void);
 
 //Carry flag operations
 void CCF(void); //Invert carry flag
@@ -75,7 +75,6 @@ void STOP(void);
 
 // Static Functions
 static uint8_t checkConditionCode(enum ConditionCode cc);
-
 #define INC16(x) (x)++
 #define DEC16(x) (x)--
 #define RES(reg, bitPosition) (reg) &= ~(1 << (bitPosition))

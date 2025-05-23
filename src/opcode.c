@@ -12,220 +12,208 @@ void LD_HL_SP(void) {
 
     cpu.hl = (uint16_t)(before + val);
 
-    cpu.f &= ~(1 << FLAG_ZERO | 1 << FLAG_SUB);
-    if (val + before > 0xFFFF) 
-        cpu.f |= 1 << FLAG_CARRY;
-    if(val + before & 0xFF > 0xFF)
-        cpu.f |= 1 << FLAG_HALF_CARRY;
+    cpu.zero = 0;
+    cpu.sub = 0;
+    cpu.carry = (val & 0xFF) + (before & 0xFF) > 0xFF ? 1 : 0; //Overflow from bit 7 
+    cpu.halfCarry = (val & 0xF) + (before & 0xF) > 0xF ? 1 : 0; //Overflow from bit 3
 }
 
 void ADD8(uint8_t *reg, uint8_t val) {
     uint8_t before = *reg;
     *reg += val;
     
-    if ((before & 0xF) + (val & 0xF) > 0xF) // Check for half byte overflow
-        cpu.f |= 1 << FLAG_HALF_CARRY; 
-    if (before + val > 0xFF) // Check for byte overflow
-        cpu.f |= 1 << FLAG_CARRY;
-    if (*reg == 0) // Check if result is 0
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f &= ~(1 << FLAG_SUB);
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.carry = (before + val > 0xFF) ? 1 : 0; // Overflow on bit 7
+    cpu.halfCarry = (before & 0xF) + (val & 0xF) > 0xF ? 1 : 0; // Overflow on bit 3
 }
 
 void SUB(uint8_t *reg, uint8_t val) {
     uint8_t before = *reg;
     *reg -= val;
-    
-    if ((before & 0xF) < (val & 0xF)) // Check for half byte underflow
-        cpu.f |= 1 << FLAG_HALF_CARRY; 
-    if (before < val) // Check for byte underflow
-        cpu.f |= 1 << FLAG_CARRY;
-    if (*reg == 0) // Check if result is 0
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f |= 1 << FLAG_SUB;
+
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 1;
+    cpu.carry = val > before ? 1 : 0; // Check for byte underflow
+    cpu.halfCarry = (val & 0xF) > (before & 0xF) ? 1 : 0; // Check for half byte underflow
 }
 
-void ADD_SP(uint16_t *reg, int8_t val) {
-    uint16_t before = *reg;
-    *reg += val;
+void ADD_SP(void) {
+    uint16_t before = cpu.sp;
+    int8_t val = cpuFetch();
+    cpu.sp += val;
 
-    if((before & 0xFF) + val > 0xFF) //Check for overflow on 7th bit
-        cpu.f |= 1 << FLAG_CARRY;
-    if((before & 0xF) + (int8_t)(val & 0xF) > 0xF) //Check for overflow on 3rd bit
-        cpu.f |= 1 << FLAG_HALF_CARRY;
-    cpu.f &= ~(1 << FLAG_SUB | 1 << FLAG_ZERO);
+    cpu.zero = 0;
+    cpu.sub = 0;
+    cpu.carry = (before & 0xFF) + val > 0xFF ? 1 : 0; //Check for overflow on 7th bit
+    cpu.halfCarry = (before & 0xF) + (int8_t)(val & 0xF) > 0xF ? 1 : 0; //Check for overflow on 3rd bit
 }
 
-void ADD16(uint16_t *reg, uint16_t val) {
-    uint16_t before = *reg;
-    *reg += val;
+void ADD16(uint16_t val) {
+    uint16_t before = cpu.hl; // Used excusively for HL register
+    cpu.hl += val;
 
-    if(*reg > 0xFFFF) //Check for overflow
-        cpu.f |= 1 << FLAG_CARRY;
-    if((before & 0xFFF) + (val & 0xFFF) > 0xFFF) //Check for overflow on 11th bit
-        cpu.f |= 1 << FLAG_HALF_CARRY;
-    cpu.f &= ~(1 << FLAG_SUB);
+    cpu.sub = 0;
+    cpu.carry = before + val > 0xFFFF ? 1 : 0; // Overflow on 15th bit
+    cpu.halfCarry = (before & 0xFFF) + (val & 0xFFF) > 0xFFF ? 1 : 0; //Check for overflow on 11th bit    
 }
 
 void ADC(uint8_t *reg, uint8_t val) {
     uint8_t before = *reg;
-    uint8_t carry = cpu.f & (1 << FLAG_CARRY) ? 1 : 0;
-    *reg += val + carry;
+    *reg += val + cpu.carry;
 
-    if ((before & 0xF) + (val & 0xF) + carry > 0xF)
-        cpu.f |= 1 << FLAG_HALF_CARRY;
-    if (before + val + carry > 0xFF)
-        cpu.f |= 1 << FLAG_CARRY;
-    if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f &= ~(1 << FLAG_SUB);
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0; 
+    cpu.halfCarry = (before & 0xF) + (val & 0xF) + cpu.carry > 0xF ? 1 : 0;
+    cpu.carry = before + val + cpu.carry > 0xFF ? 1 : 0;
 }
 
 void SBC(uint8_t *reg, uint8_t val) {
     uint8_t before = *reg;
-    uint8_t carry = cpu.f & (1 << FLAG_CARRY) ? 1 : 0;
-    *reg -= val + carry;
+    *reg -= val + cpu.carry;
 
-    if ((before & 0xF) < (val & 0xF) + carry)
-        cpu.f |= 1 << FLAG_HALF_CARRY;
-    if (before < val + carry)
-        cpu.f |= 1 << FLAG_CARRY;
-    if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f |= 1 << FLAG_SUB;
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 1; 
+    cpu.halfCarry = (val & 0xF) + cpu.carry > (before & 0xF) ? 1 : 0;
+    cpu.carry = val + cpu.carry > before ? 1 : 0;
 }
 
 void CP(uint8_t *reg, uint8_t val){
     uint8_t before = *reg;
     
-    if ((before & 0xF) < (val & 0xF)) // Check for half byte underflow
-        cpu.f |= 1 << FLAG_HALF_CARRY; 
-    if (before < val) // Check for byte underflow
-        cpu.f |= 1 << FLAG_CARRY;
-    if (before == val) // Check if result is 0
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f |= 1 << FLAG_SUB;
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 1; 
+    cpu.halfCarry = (val & 0xF) > (before & 0xF) ? 1 : 0;
+    cpu.carry = val > before ? 1 : 0;
 }
 
 void INC8(uint8_t *reg) {
     uint8_t before = *reg;
     (*reg)++;
 
-    if (before & 0xF == 0xF)
-        cpu.f |= 1 << FLAG_HALF_CARRY;
-    if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO; // TODO: Z FLAG has to be cleared if result is not 0
-    cpu.f &= ~(1 << FLAG_SUB);
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0; 
+    cpu.halfCarry = (before & 0xF == 0xF) ? 1 : 0;
 }
 
 void DEC8(uint8_t *reg) {
     uint8_t before = *reg;
     (*reg)--;
 
-    if (before & 0xF == 0x0)
-        cpu.f |= 1 << FLAG_HALF_CARRY;
-    if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f |= 1 << FLAG_SUB;
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 1; 
+    cpu.halfCarry = (before & 0xF == 0) ? 1 : 0;
 }
 
 void AND(uint8_t *reg, uint8_t val) {
     *reg &= val;
-    cpu.f &= ~(1 << FLAG_SUB | 1 << FLAG_CARRY);
-    cpu.f |= 1 << FLAG_HALF_CARRY;
-    if(*reg == 0) 
-        cpu.f |= 1 << FLAG_ZERO;
+
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 1;
+    cpu.carry = 0;
 }
 
 void OR(uint8_t *reg, uint8_t val) {
     *reg |= val;
-    cpu.f &= ~(1 << FLAG_CARRY | 1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO;
+
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
+    cpu.carry = 0;
 }
 
 void XOR(uint8_t *reg, uint8_t val) {
     *reg ^= val;
-    cpu.f &= ~(1 << FLAG_CARRY | 1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO;
+    
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
+    cpu.carry = 0;
 }
 
+// Only works on register A
 void CPL(void) {
     cpu.a = ~(cpu.a);
-    cpu.f |= 1 << FLAG_HALF_CARRY | 1 << FLAG_SUB;
+    
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void BIT(uint8_t *reg, uint8_t bitPosition) {
-    if (*reg & (1 << bitPosition) == 0)
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f |= 1 << FLAG_HALF_CARRY;
-    cpu.f &= ~(1 << FLAG_SUB);
+    if ((*reg) & (1 << bitPosition) == 0)
+        cpu.zero = 0;
+
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void RL(uint8_t *reg, uint8_t isCircular, uint8_t isRegA) {
     uint8_t before = *reg;
-    *reg = *reg << 1 | isCircular ? (before >> 7) : ((cpu.f >> FLAG_CARRY) & 1);
-    cpu.f = (before >> 0x7) << FLAG_CARRY;
+    if (isCircular) {
+        cpu.carry = before >> 7; // Carry flag set to bit 7 of register
+        *reg = (*reg << 1) + cpu.carry; // Register rotated by 1 bit
+    } else {
+        *reg = (*reg << 1) + cpu.carry; // Register rotated by 1 bit including carry flag  
+        cpu.carry = before >> 7; // Carry flag set to bit 7 of register
+    }
 
-    cpu.f &= ~(1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (!isRegA && *reg == 0) 
-        cpu.f |= 1 << FLAG_ZERO;
-    else
-        cpu.f &= ~(1 << FLAG_ZERO);
+    cpu.zero = (*reg == 0) || (isRegA == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void RR(uint8_t *reg, uint8_t isCircular, uint8_t isRegA) {
     uint8_t before = *reg;
-    *reg = *reg >> 1 | isCircular ? (before & 0x80) : ((cpu.f >> FLAG_CARRY) << 7);
-    cpu.f = (before & 1) << FLAG_CARRY;
+    if (isCircular) {
+        cpu.carry = before & 0x01; // Carry flag set to bit 0 of register
+        *reg = (cpu.carry << 7) + (*reg >> 1); // Register rotated by 1 bit
+    } else {
+        *reg = (cpu.carry << 7) + (*reg >> 1); // Register rotated by 1 bit including carry flag
+        cpu.carry = before & 0x01; // Carry flag set to bit 0 of register
+    }
 
-    cpu.f &= ~(1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (!isRegA && *reg == 0) 
-        cpu.f |= 1 << FLAG_ZERO;
-    else
-        cpu.f &= ~(1 << FLAG_ZERO);
+    cpu.zero = (*reg == 0) || (isRegA == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void SLA(uint8_t *reg) {
-    cpu.f = (*reg >> 7) << FLAG_CARRY;
-    *reg <<= 1;
+    cpu.carry = *reg >> 7;
+    *reg = *reg << 1;
 
-    cpu.f &= ~(1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (*reg == 0) 
-        cpu.f |= 1 << FLAG_ZERO;
-    else
-        cpu.f &= ~(1 << FLAG_ZERO);
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void SRA(uint8_t *reg) {
-    cpu.f = (*reg & 1) << FLAG_CARRY;
-    *reg = *reg >> 1 | (*reg & 0x80);
+    cpu.carry = *reg & 0x01;
+    *reg = *reg >> 1 + (*reg & 0x80);
 
-    cpu.f &= ~(1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (*reg == 0) 
-        cpu.f |= 1 << FLAG_ZERO;
-    else
-        cpu.f &= ~(1 << FLAG_ZERO);
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void SRL(uint8_t *reg) {
-    cpu.f = (*reg & 1) << FLAG_CARRY;
+    cpu.carry = *reg & 0x01;
     *reg >>= 1;
 
-    cpu.f &= ~(1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (*reg == 0) 
-        cpu.f |= 1 << FLAG_ZERO;
-    else
-        cpu.f &= ~(1 << FLAG_ZERO);
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void SWAP(uint8_t *reg) {
-    uint8_t upperNibble = (*reg & 0b11110000) >> 4;
-    *reg = *reg << 4 | upperNibble;
-    cpu.f &= ~(1 << FLAG_CARRY | 1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
-    if (*reg == 0)
-        cpu.f |= 1 << FLAG_ZERO;
+    uint8_t upperNibble = *reg & 0xF0; 
+    uint8_t lowerNibble = *reg & 0x0F;
+    *reg = lowerNibble << 4 | upperNibble >> 4;
+
+    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
+    cpu.carry = 0;
 }
 
 void JP(uint16_t address, enum ConditionCode cc) {
@@ -275,13 +263,15 @@ void PUSH(uint16_t reg) {
 }
 
 void CCF(void) {
-    cpu.f ^= 1 << FLAG_CARRY;
-    cpu.f &= ~(1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
+    cpu.carry = ~cpu.carry;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void SCF(void) {
-    cpu.f |= 1 << FLAG_CARRY;
-    cpu.f &= ~(1 << FLAG_HALF_CARRY | 1 << FLAG_SUB);
+    cpu.carry = 1;
+    cpu.sub = 0;
+    cpu.halfCarry = 0;
 }
 
 void DI(void) {
@@ -306,23 +296,22 @@ void HALT(void) {
 
 void DAA(void) {
     uint8_t adjustment = 0;
-    if (cpu.f & (1 << FLAG_SUB)) {
-        adjustment += (cpu.f & (1 << FLAG_HALF_CARRY)) ? 0x6 : 0;
-        adjustment += (cpu.f & (1 << FLAG_CARRY)) ? 0x60 : 0;
+    if (cpu.sub) {
+        adjustment += cpu.halfCarry ? 0x6 : 0;
+        adjustment += cpu.carry ? 0x60 : 0;
         cpu.a -= adjustment;
     } else {
-        if (cpu.f & (1 << FLAG_HALF_CARRY) || cpu.a & 0xF > 0x9)
+        if (cpu.halfCarry || (cpu.a & 0xF) > 0x9)
             adjustment += 0x6;
-        if (cpu.f & (1 << FLAG_CARRY) || cpu.a > 0x99) {
+        if (cpu.carry || cpu.a > 0x99) {
             adjustment += 0x60;
-            cpu.f |= 1 << FLAG_CARRY;
+            cpu.carry = 1;
         }
         cpu.a += adjustment;
     }
 
-    if (cpu.a == 0)
-        cpu.f |= 1 << FLAG_ZERO;
-    cpu.f &= ~(1 << FLAG_HALF_CARRY);
+    cpu.zero = (cpu.a == 0) ? 1 : 0;
+    cpu.halfCarry = 0;
 }
 
 void NOP(void) {}   
@@ -333,13 +322,13 @@ void STOP(void) {
 static uint8_t checkConditionCode(enum ConditionCode cc) {
     switch (cc) {
         case Z:
-            return cpu.f & (1 << FLAG_ZERO) ? 1 : 0; break;
+            return cpu.zero ? 1 : 0; break;
         case NZ:
-            return cpu.f & (1 << FLAG_ZERO) ? 0 : 1; break;
+            return cpu.zero ? 0 : 1; break;
         case C:
-            return cpu.f & (1 << FLAG_CARRY) ? 1 : 0; break;
+            return cpu.carry ? 1 : 0; break;
         case NC:
-            return cpu.f & (1 << FLAG_CARRY) ? 0 : 1; break;
+            return cpu.carry ? 0 : 1; break;
         case NOC:
         default:
             return 1; break;
