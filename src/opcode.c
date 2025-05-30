@@ -93,7 +93,7 @@ void INC8(uint8_t *reg) {
 
     cpu.zero = (*reg == 0) ? 1 : 0;
     cpu.sub = 0; 
-    cpu.halfCarry = (before & 0xF == 0xF) ? 1 : 0;
+    cpu.halfCarry = ((before & 0xF) == 0xF) ? 1 : 0;
 }
 
 void DEC8(uint8_t *reg) {
@@ -102,7 +102,7 @@ void DEC8(uint8_t *reg) {
 
     cpu.zero = (*reg == 0) ? 1 : 0;
     cpu.sub = 1; 
-    cpu.halfCarry = (before & 0xF == 0) ? 1 : 0;
+    cpu.halfCarry = ((before & 0xF) == 0) ? 1 : 0;
 }
 
 void AND(uint8_t *reg, uint8_t val) {
@@ -223,8 +223,8 @@ void JP(uint16_t address, enum ConditionCode cc) {
 
 void CALL(uint16_t address, enum ConditionCode cc) {
     if(checkConditionCode(cc)) {
-        memoryWrite(--cpu.sp, (uint8_t)((cpu.pc + 1) >> 8)); //Decrement stack address, write MSByte to stack
-        memoryWrite(--cpu.sp, (uint8_t)((cpu.pc + 1) & 0xFF)); //Decrement stack address, write LSByte to stack
+        memoryWrite(--cpu.sp, (uint8_t)((cpu.pc) >> 8)); //Decrement stack address, write MSByte to stack
+        memoryWrite(--cpu.sp, (uint8_t)((cpu.pc) & 0xFF)); //Decrement stack address, write LSByte to stack
         JP(address, NOC); // Perform jump operation
     }
 }

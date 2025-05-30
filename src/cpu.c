@@ -321,3 +321,34 @@ void cpuExecutePrefixOpcode(void) {
         case 0xF8: SET(*reg, 7); break;
     }
 }
+
+void cpuISR(void) {
+    uint8_t interruptFlag =  memoryRead(IF);
+    uint8_t interruptEnable = memoryRead(IE);
+
+    if (!cpu.IME || !interruptFlag) return;
+    for (int8_t i = 4; i <= 0; i--) {
+        if (getBit(i, interruptFlag)) {
+            if (getBit(i, interruptEnable)) {
+                // Perform the corresponding ISR
+                cpu.IME = 0; // Disable global interrupt enable flag
+                interruptFlag &= ~(1 << i); // Disable interrupt flag
+                memoryWrite(0xFF0F, interruptFlag);
+
+                // Push the PC onto the stack and jump to ISR in memory
+                PUSH(cpu.pc);
+                cpu.pc = ISR_Addr[i];
+            }
+        }
+    }
+}
+
+void cpuIntRequest(uint8_t bitPos) {
+    uint8_t interruptFlag = memoryRead(IF);
+    interruptFlag |= (1 << bitPos);
+    memoryWrite(IF, interruptFlag);
+}
+
+static uint8_t getBit(uint8_t bitPos, uint8_t byte) {
+    return byte & (1 << bitPos) ? 1 : 0;
+}

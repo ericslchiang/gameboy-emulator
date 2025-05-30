@@ -1,5 +1,5 @@
 #include "memory.h"
-#define ROM_NAME "./roms/10-bit ops.gb"
+#define ROM_NAME "./roms/06-ld r,r.gb"
 
 MEMORY memory;
 CARTRIDGE cartridge = {
@@ -168,12 +168,17 @@ void memoryWrite(uint16_t address, uint8_t byte) {
     emulator.mCycles++;
     emulator.tCycles+=4;
     
+    // Specific system registers
     if (address == 0xFF02 && byte == 0x81) {
         // Emulate serial output
         printf("%d", memoryRead(0xFF01));
         return;
-    } 
+    } else if (address == DIV) {
+        memory.memory[DIV] = 0;
+        return;
+    }
 
+    // Write to ranges in memory
     if (address < VRAM) { // If writes to ROM check for MBC operations
         switch (cartridge.mbcType) {
             case MBC_1: memoryMBC1Write(address, byte); break;

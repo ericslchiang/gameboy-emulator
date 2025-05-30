@@ -2,13 +2,16 @@
 #include <stdint.h>
 #include "memory.h"
 
-#define FLAG_ZERO 7
-#define FLAG_SUB 6
-#define FLAG_HALF_CARRY 5
-#define FLAG_CARRY 4
+static const uint8_t ISR_Addr[5] = {
+    0x0040, // VBlank
+    0x0048, // LCD Status
+    0x0050, // Timer
+    0x0058, // Serial Int
+    0x0060, // Joypad
+};
 
 typedef struct {
-    uint8_t IME; // Interrupt Master Enable
+    uint8_t IME : 1; // Interrupt Master Enable
     union {
         struct {
             union {
@@ -63,3 +66,6 @@ void cpuInit(void);
 uint8_t cpuFetch(void);
 void cpuExecuteOpcode(void);
 void cpuExecutePrefixOpcode(void);
+void cpuISR(void);
+void cpuIntRequest(uint8_t bitPos);
+static uint8_t getBit(uint8_t bitPos, uint8_t byte);
