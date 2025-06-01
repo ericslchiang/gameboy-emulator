@@ -6,8 +6,18 @@ const uint16_t colourPalette[4] = {
     0x5555, // Dark grey
     0x000, // Black
 };
+
 uint16_t frameBuffer[LCD_DISPLAY_WIDTH * LCD_DISPLAY_HEIGHT];
 PPU ppu;
+
+void ppuInit(void) {
+    ppu.control = memoryRead(LCDC);
+    ppu.ly = memoryRead(LY);
+    ppu.windowX = memoryRead(WX);
+    ppu.windowY = memoryRead(WY);
+    ppu.scrollX = memoryRead(SCX);
+    ppu.scrollY = memoryRead(SCY);
+}
 
 void ppuStep(void) {
     static ppuMode = Mode_0_HBlank;
@@ -181,24 +191,6 @@ void ppuRenderSprite(void) {
             }
         }
     }
-}
-
-/*
-Some notes about PPU rendering
--PPU chooses whether to get tile from background or window tilemap
--Each tilemap is 32x32 (=1024) tiles
--Tilemap occupies region in memory of ~0x400 (aka 1024 bytes)
--Each byte signifies the address of the tile in memory to be found 
-    in VRAM (0x8000 ~ 0x97FF)
-
--PPU keeps track of which pixel its rendering on the screeen
--Current pixel y-position is given by LY register + SCY
--Current pixel x-position is recorded for each pixel render
--By calculating PPU x-pos / 8
-*/
-
-static bool getBit(uint8_t bitPos, uint8_t byte) {
-    return byte & (1 << bitPos) ? 1 : 0;
 }
 
 // Initializing SDL objects

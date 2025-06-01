@@ -6,6 +6,14 @@ void LD_MEM_SP(void) {
     memoryWrite(++address, (uint8_t)(cpu.sp >> 8));
 }
 
+// void LD_8_MEM(uint8_t *reg, uint16_t address) {
+//     *reg = memoryRead(address); 
+// }
+
+// void LD_MEM_8(uint16_t address, uint8_t reg) {
+//     memoryWrite(address, reg);
+// }
+
 void LD_HL_SP(void) {
     int8_t val = cpuFetch();
     uint16_t before = cpu.sp;
@@ -81,7 +89,7 @@ void SBC(uint8_t *reg, uint8_t val) {
 void CP(uint8_t *reg, uint8_t val){
     uint8_t before = *reg;
     
-    cpu.zero = (*reg == 0) ? 1 : 0;
+    cpu.zero = (before == val) ? 1 : 0;
     cpu.sub = 1; 
     cpu.halfCarry = (val & 0xF) > (before & 0xF) ? 1 : 0;
     cpu.carry = val > before ? 1 : 0;
@@ -286,7 +294,7 @@ void HALT(void) {
     if (cpu.IME) {
         //Enter Low Power Mode
     } else {
-        if (memoryRead(MEM_INTERRUPT_EN) & memoryRead(0xFF00)) { // Some Interrupts Pending
+        if (memoryRead(IE) & memoryRead(0xFF00)) { // Some Interrupts Pending
             //CPU continues execution, but reads the next byte twice due to hardware bug
         } else { //No interrupts pending
 

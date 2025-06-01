@@ -13,6 +13,7 @@ int main(void) {
   memoryLoadCartridgeHeader();
   memoryLoadCartridge();
   memoryLoadBootROM();
+  memoryInitRegisters();
   cpuInit();
 
   while (1) {

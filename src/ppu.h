@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "memory.h"
 #include "cpu.h"
-#include "emulator.h"
+// #include "emulator.h"
 #include <SDL2/SDL.h>
 
 #define LCD_SIZE 256
@@ -69,11 +69,11 @@ typedef struct {
 const uint16_t colourPalette[4];
 extern uint16_t frameBuffer[LCD_DISPLAY_WIDTH * LCD_DISPLAY_HEIGHT];
 
+void ppuInit(void);
 void ppuStep(void);// Pads out draw time of each scanline to be 456 T-cycles;
 void ppuRenderScanline(void);
 void ppuRenderSprite(void);
 uint16_t ppuGetColour(uint8_t colourID, uint16_t paletteAddr);
-static bool getBit(uint8_t bitPos, uint8_t byte);
 void sdlInitialize(SDL_OBJ *sdl);
 void sdlDeinitialize(SDL_OBJ *sdl);
 void sdlRender(SDL_OBJ *sdl, uint16_t *pixels);

@@ -29,7 +29,8 @@ void cpuExecuteOpcode(void) {
         case 0x03: INC16(cpu.bc); break;
         case 0x04: INC8(&cpu.b); break;
         case 0x05: DEC8(&cpu.b); break;
-        case 0x06: LD_8_MEM(cpu.b, cpuFetch()); break;
+        case 0x06: LD(cpu.b, cpuFetch()); break;
+        // case 0x06: LD_8_MEM(cpu.b, cpuFetch()); break;
         case 0x07: RL(&cpu.a, TRUE, TRUE); break;
         case 0x08: LD_MEM_SP(); break;
         case 0x09: ADD16(cpu.bc); break;
@@ -135,14 +136,14 @@ void cpuExecuteOpcode(void) {
         case 0x6D: LD(cpu.l, cpu.l); break;
         case 0x6E: LD_8_MEM(cpu.l, cpu.hl); break;
         case 0x6F: LD(cpu.l, cpu.a); break;
-        case 0x70: LD(cpu.hl, cpu.b); break;
-        case 0x71: LD(cpu.hl, cpu.c); break;
-        case 0x72: LD(cpu.hl, cpu.d); break;
-        case 0x73: LD(cpu.hl, cpu.e); break;
-        case 0x74: LD(cpu.hl, cpu.h); break;
-        case 0x75: LD(cpu.hl, cpu.l); break;
+        case 0x70: LD_MEM_8(cpu.hl, cpu.b); break;
+        case 0x71: LD_MEM_8(cpu.hl, cpu.c); break;
+        case 0x72: LD_MEM_8(cpu.hl, cpu.d); break;
+        case 0x73: LD_MEM_8(cpu.hl, cpu.e); break;
+        case 0x74: LD_MEM_8(cpu.hl, cpu.h); break;
+        case 0x75: LD_MEM_8(cpu.hl, cpu.l); break;
         case 0x76: HALT(); break;
-        case 0x77: LD(cpu.hl, cpu.a); break;
+        case 0x77: LD_MEM_8(cpu.hl, cpu.a); break;
         case 0x78: LD(cpu.a, cpu.b); break;
         case 0x79: LD(cpu.a, cpu.c); break;
         case 0x7A: LD(cpu.a, cpu.d); break;
@@ -268,6 +269,7 @@ void cpuExecuteOpcode(void) {
         case 0xFE: CP(&cpu.a, cpuFetch()); break;
         case 0xFF: RST(0x38); break;
     }
+    ticks += ClocksPerInstruction[opcode];
 }
 
 void cpuExecutePrefixOpcode(void) {
@@ -320,6 +322,7 @@ void cpuExecutePrefixOpcode(void) {
         case 0xF0: SET(*reg, 6); break;
         case 0xF8: SET(*reg, 7); break;
     }
+    ticks += ClocksPerCBInstruction[opcode];
 }
 
 void cpuISR(void) {
@@ -338,6 +341,9 @@ void cpuISR(void) {
                 // Push the PC onto the stack and jump to ISR in memory
                 PUSH(cpu.pc);
                 cpu.pc = ISR_Addr[i];
+
+                // Add 5 M-cycles to the clock
+                ticks += 20;
             }
         }
     }
@@ -349,6 +355,6 @@ void cpuIntRequest(uint8_t bitPos) {
     memoryWrite(IF, interruptFlag);
 }
 
-static uint8_t getBit(uint8_t bitPos, uint8_t byte) {
+uint8_t getBit(uint8_t bitPos, uint8_t byte) {
     return byte & (1 << bitPos) ? 1 : 0;
 }

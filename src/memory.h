@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "emulator.h"
+// #include "emulator.h"
 
 #define ROM_BANK_0 0x0000
 #define ROM_BANK_N 0x4000
@@ -16,6 +16,9 @@
 #define OAM 0xFE00
 #define MEM_PROHIBITED 0xFEA0
 #define MEM_IO_REGISTERS 0xFF00
+#define P1 0xFF00
+#define SB 0xFF01
+#define SC 0xFF02
 #define DIV 0xFF04
 #define TIMA 0xFF05
 #define TMA 0xFF06
@@ -23,6 +26,18 @@
 #define HRAM 0xFF80
 #define IF 0xFF0F
 #define IE 0xFFFF
+#define LCDC 0xFF40
+#define STAT 0xFF41
+#define SCY 0xFF42
+#define SCX 0xFF43
+#define LY 0xFF44
+#define LYC 0xFF45
+#define DMA 0xFF46
+#define BGP 0xFF47
+#define OBP0 0xFF48
+#define OBP1 0xFF49
+#define WY 0xFF4A
+#define WX 0xFF4B
 
 static const uint8_t nintendoLogo[] = {
     0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D, 
@@ -83,6 +98,7 @@ static uint8_t *memoryRAMBank;
 
 // extern EMULATOR emulator;
 
+void memoryInitRegisters(void);
 void memoryLoadBootROM(void);
 uint8_t memoryLoadCartridge(void);
 void memoryLoadCartridgeHeader(void);

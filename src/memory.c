@@ -139,11 +139,33 @@ void memoryLoadCartridgeHeader(void) {
     printf("Header Checksum: %d\n", headerChecksum);
 }
 
-uint8_t memoryRead(uint16_t address) {
-    // Increment clock
-    emulator.mCycles++;
-    emulator.tCycles+=4;
+void memoryInitRegisters(void) {
+    memory.memory[P1] = 0xCF;
+    memory.memory[SB] = 0x00;
+    memory.memory[SC] = 0x7E;
+    memory.memory[DIV] = 0x18;
+    memory.memory[TIMA] = 0x00;
+    memory.memory[TMA] = 0x00;
+    memory.memory[TAC] = 0xF8;
+    memory.memory[IF] = 0xE1;
+    // Audio register 0xFF10 ~ 0xFF26
+    memory.memory[LCDC] = 0x91;
+    memory.memory[STAT] = 0x81;
+    memory.memory[SCY] = 0x00;
+    memory.memory[SCX] = 0x00;
+    memory.memory[LY] = 0x90;
+    memory.memory[LYC] = 0x00;
+    memory.memory[DMA] = 0xFF;
+    memory.memory[BGP] = 0xFC;
+    memory.memory[OBP0] = 0x00;
+    memory.memory[OBP1] = 0x00;
+    memory.memory[WY] = 0x00;
+    memory.memory[WX] = 0x00;
+    memory.memory[IE] = 0x00;
 
+}
+
+uint8_t memoryRead(uint16_t address) {
     if (ROM_BANK_N <= address && address < VRAM) { // Check if we are reading from ROM bank
         return memoryROMBank[(cartridge.currentROMBank - 1) * 16 * 1024 + address];
     } else if (RAM_BANK <= address && address < WRAM_0) { // Check if we are reading from external RAM Bank
@@ -164,14 +186,11 @@ uint8_t memoryRead(uint16_t address) {
 }
 
 void memoryWrite(uint16_t address, uint8_t byte) {
-    // Increment clock
-    emulator.mCycles++;
-    emulator.tCycles+=4;
-    
     // Specific system registers
     if (address == 0xFF02 && byte == 0x81) {
         // Emulate serial output
-        printf("%d", memoryRead(0xFF01));
+        printf("%c", memory.memory[0xFF01]);
+        memory.memory[0xFF02] = 0;
         return;
     } else if (address == DIV) {
         memory.memory[DIV] = 0;
