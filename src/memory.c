@@ -1,5 +1,6 @@
 #include "memory.h"
-#define ROM_NAME "./roms/06-ld r,r.gb"
+#define ROM_NAME "./roms/07-jr,jp,call,ret,rst.gb"
+
 
 MEMORY memory;
 CARTRIDGE cartridge = {
@@ -155,12 +156,17 @@ void memoryInitRegisters(void) {
     memory.memory[SCX] = 0x00;
     memory.memory[LY] = 0x90;
     memory.memory[LYC] = 0x00;
-    memory.memory[DMA] = 0xFF;
+    memory.memory[DMA] = 0x00;
+    // memory.memory[DMA] = 0xFF;
     memory.memory[BGP] = 0xFC;
     memory.memory[OBP0] = 0x00;
     memory.memory[OBP1] = 0x00;
     memory.memory[WY] = 0x00;
     memory.memory[WX] = 0x00;
+    memory.memory[0xFF4C] = 0xFF;
+    memory.memory[0xFF4D] = 0x7E;
+    memory.memory[0xFF4E] = 0xFF;
+    memory.memory[0xFF4F] = 0xFE;
     memory.memory[IE] = 0x00;
 
 }

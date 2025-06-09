@@ -56,7 +56,9 @@ void RST(uint8_t vec); //Value of vec will be determined by the opcode value
 
 // Stack manipulation commands
 void POP(uint16_t *reg);
+void POP_AF(void);
 void PUSH(uint16_t reg);
+void PUSH_AF(void);
 void ADD_SP(void);
 
 //Carry flag operations
